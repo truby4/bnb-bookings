@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/truby4/web_app_udemy_tsawler/internal/config"
+	"github.com/truby4/web_app_udemy_tsawler/internal/models"
 )
 
 var app *config.AppConfig
@@ -16,7 +17,9 @@ func NewTemplates(a *config.AppConfig) {
 	app = a
 }
 
-func Render(w http.ResponseWriter, tmpl string) {
+func addDefaultData(td *models.TemplateData) {}
+
+func Render(w http.ResponseWriter, tmpl string, td *models.TemplateData) {
 	var tc map[string]*template.Template
 
 	if app.UseCache {
@@ -35,7 +38,9 @@ func Render(w http.ResponseWriter, tmpl string) {
 	// checks to make sure its valid template?
 	buf := new(bytes.Buffer)
 
-	err := t.Execute(buf, nil)
+	addDefaultData(td)
+
+	err := t.Execute(buf, td)
 	if err != nil {
 		log.Println(err.Error())
 	}

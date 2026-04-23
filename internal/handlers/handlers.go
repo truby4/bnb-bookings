@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/truby4/web_app_udemy_tsawler/internal/config"
+	"github.com/truby4/web_app_udemy_tsawler/internal/models"
 	"github.com/truby4/web_app_udemy_tsawler/internal/render"
 )
 
@@ -24,9 +25,19 @@ func NewHandlers(r *Repository) {
 }
 
 func (m *Repository) Home(w http.ResponseWriter, r *http.Request) {
-	render.Render(w, "home.page.tmpl")
+	remoteIP := r.RemoteAddr
+	m.App.Session.Put(r.Context(), "remote_ip", remoteIP)
+	render.Render(w, "home.page.tmpl", &models.TemplateData{})
 }
 
 func (m *Repository) About(w http.ResponseWriter, r *http.Request) {
-	render.Render(w, "about.page.tmpl")
+	stringMap := make(map[string]string)
+	stringMap["test"] = "Hello again"
+
+	remoteIP := m.App.Session.GetString(r.Context(), "remote_ip")
+	stringMap["remote_ip"] = remoteIP
+
+	render.Render(w, "about.page.tmpl", &models.TemplateData{
+		StringMap: stringMap,
+	})
 }

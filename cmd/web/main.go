@@ -3,7 +3,9 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
+	"github.com/alexedwards/scs/v2"
 	"github.com/truby4/web_app_udemy_tsawler/internal/config"
 	"github.com/truby4/web_app_udemy_tsawler/internal/handlers"
 	"github.com/truby4/web_app_udemy_tsawler/internal/render"
@@ -11,8 +13,18 @@ import (
 
 const portNumber = ":8080"
 
+var app config.AppConfig
+var session *scs.SessionManager
+
 func main() {
-	var app config.AppConfig
+
+	app.InProduction = false
+
+	session = scs.New()
+	session.Lifetime = 24 * time.Hour
+	session.Cookie.Persist = true
+	session.Cookie.SameSite = http.SameSiteLaxMode
+	session.Cookie.Secure = app.InProduction
 
 	tc, err := render.CreateTemplateCache()
 	if err != nil {
@@ -21,15 +33,20 @@ func main() {
 
 	app.TemplateCache = tc
 	app.UseCache = false
+	app.Session = session
 
 	repo := handlers.NewRepo(&app)
 	handlers.NewHandlers(repo)
 
 	render.NewTemplates(&app)
 
-	http.HandleFunc("/", repo.Home)
-	http.HandleFunc("/about", repo.About)
-
 	log.Printf("starting server on port %s\n", portNumber)
-	http.ListenAndServe(portNumber, nil)
+
+	srv := &http.Server{
+		Addr:    portNumber,
+		Handler: routes(&app),
+	}
+
+	err = srv.ListenAndServe()
+	log.Fatal(err)
 }
